@@ -25,10 +25,6 @@ void afficher_grille(char grille[ROWS][COLS])
             if (grille[i][j] == BOMB) {
                 printf(" %c |", CACHE);
             }
-            else {
-                printf(" %c |", grille[i][j]);
-            }
-        }
         printf("\n");
         printf("   ");
         for (int j = 0; j < COLS; j++) {
