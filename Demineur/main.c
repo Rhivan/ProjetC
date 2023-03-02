@@ -3,7 +3,7 @@
 
 #define ROWS 10 // nombre de lignes
 #define COLS 10 // nombre de colonnes
-#define BOMB 'X' 
+#define BOMB '*' 
 #define CACHE '+'
 #define EMPTY ' '
 
@@ -13,7 +13,6 @@ typedef short BOOL;
 
 typedef struct tile {
     char bomb;
-    char status;
     BOOL hidden;
     int proximity;
     int flag;
@@ -36,9 +35,17 @@ void afficher_grille(tile grille[ROWS][COLS])
     for (int i = 0; i < ROWS; i++) {
         printf("%2d |", i + 1);
         for (int j = 0; j < COLS; j++) {
-
-            printf(" %c |", CACHE);
-
+            if (grille[i][j].hidden == TRUE && grille[i][j].flag == TRUE)
+                printf(" P |");
+            else if (grille[i][j].hidden == FALSE && grille[i][j].bomb == BOMB)
+                printf(" %c |", BOMB);
+            else if (grille[i][j].hidden == FALSE && grille[i][j].proximity == 0)
+                printf("   |");
+            else if (grille[i][j].hidden == FALSE && grille[i][j].proximity > 0)
+                printf(" %d |", grille[i][j].proximity);
+            else {
+                printf(" %c |", CACHE);
+            }
         }
         printf("\n");
         printf("   ");
@@ -69,7 +76,8 @@ void initialize_grille(tile grille[ROWS][COLS])
     for (i = 0; i < ROWS; i++) {
         for (j = 0; j < COLS; j++) {
             grille[i][j].hidden = FALSE;
-            grille[i][j].flag = 0;
+            grille[i][j].bomb = FALSE;
+            grille[i][j].flag = FALSE;
         }
 
     }
@@ -99,31 +107,60 @@ int GetInputNumber(const char* message, int min, int max)
     }
 }
 
-void calculate_numbers(char grille[ROWS][COLS]) {
+void calculate_numbers(tile grille[ROWS][COLS]) {
     int i, j;
     for (i = 0; i < ROWS; i++) {
         for (j = 0; j < COLS; j++) {
-            if (grille[i][j] != BOMB) {
+            if (grille[i][j].bomb != BOMB) {
                 int count = 0;
                 // trouve les bombes
-                if (i > 0 && j > 0 && grille[i - 1][j - 1] == BOMB) count++;
-                if (i > 0 && grille[i - 1][j] == BOMB) count++;
-                if (i > 0 && j < COLS - 1 && grille[i - 1][j + 1] == BOMB) count++;
-                if (j > 0 && grille[i][j - 1] == BOMB) count++;
-                if (j < COLS - 1 && grille[i][j + 1] == BOMB) count++;
-                if (i < ROWS - 1 && j > 0 && grille[i + 1][j - 1] == BOMB) count++;
-                if (i < ROWS - 1 && grille[i + 1][j] == BOMB) count++;
-                if (i < ROWS - 1 && j < COLS - 1 && grille[i + 1][j + 1] == BOMB) count++;
+                if (i > 0 && j > 0 && grille[i - 1][j - 1].bomb == BOMB) count++;
+                if (i > 0 && grille[i - 1][j].bomb == BOMB) count++;
+                if (i > 0 && j < COLS - 1 && grille[i - 1][j + 1].bomb == BOMB) count++;
+                if (j > 0 && grille[i][j - 1].bomb == BOMB) count++;
+                if (j < COLS - 1 && grille[i][j + 1].bomb == BOMB) count++;
+                if (i < ROWS - 1 && j > 0 && grille[i + 1][j - 1].bomb == BOMB) count++;
+                if (i < ROWS - 1 && grille[i + 1][j].bomb == BOMB) count++;
+                if (i < ROWS - 1 && j < COLS - 1 && grille[i + 1][j + 1].bomb == BOMB) count++;
                 //affiche le nombre de bombe à proximité
                 if (count > 0) {
-                    grille[i][j] = '0' + count;
+                    grille[i][j].proximity = '0' + count;
                 }
                 else {
-                    grille[i][j] = EMPTY;
+                    grille[i][j].proximity = EMPTY;
                 }
                 
             }
         }
+    }
+}
+
+void reveal_case(tile grille[ROWS][COLS], int i, int j)
+{
+    // verifier que c'est dans le tableau
+    if (i < 0 || i >= ROWS || j < 0 || j >= COLS)
+        return;
+
+    //verifier si c'est deja reveal
+    if (grille[i][j].hidden = FALSE)
+        return;
+
+    //révéler la case
+    grille[i][j].hidden = FALSE;
+
+    if (grille[i][j].proximity != 0)
+        return;
+
+    // si la case est vide, révéler les cases adjacentes
+    if (grille[i][j].proximity == EMPTY) {
+        reveal_case(grille, i - 1, j - 1);
+        reveal_case(grille, i - 1, j);
+        reveal_case(grille, i - 1, j + 1);
+        reveal_case(grille, i, j - 1);
+        reveal_case(grille, i, j + 1);
+        reveal_case(grille, i + 1, j - 1);
+        reveal_case(grille, i + 1, j);
+        reveal_case(grille, i + 1, j + 1);
     }
 }
 
@@ -136,9 +173,9 @@ void play(tile grille[ROWS][COLS])
     while (1){
                  
         // Récupère la ligne
-        row = GetInputNumber("Entrer le numero de la ligne", 1, ROWS) - 1;
+        row = GetInputNumber("Entrer le numero de la ligne", 1, ROWS);
         // Récupère la colonne
-        col = GetInputNumber("Entrer le numero de la colonne", 1, COLS) - 1;
+        col = GetInputNumber("Entrer le numero de la colonne", 1, COLS);
 
         // Vérifie si les coordonnées sont dans le tableau
         if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
@@ -146,7 +183,7 @@ void play(tile grille[ROWS][COLS])
             continue;
         }
 
-        if (grille[row-1][col-1].hidden != 0) {
+        if (grille[row-1][col-1].hidden != FALSE) {
             printf("Case deja choisie.\n");
             continue;
         }
@@ -199,7 +236,6 @@ int main()
     plant_bomb(grille, num_mines);
     afficher_grille(grille);
     calculate_numbers(grille);
-
     play(grille);
 
     return 0;
