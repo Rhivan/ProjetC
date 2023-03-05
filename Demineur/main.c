@@ -92,7 +92,6 @@ void plant_bomb(tile grille[ROWS][COLS], int num_mines)
         if (grille[i][j].bomb != BOMB) {
             grille[i][j].bomb = BOMB;
             count++;
-            printf("bomb = %d %d \n", i + 1, j + 1);
         }
     }
 }
@@ -171,7 +170,7 @@ void proximity(tile grille[ROWS][COLS]) {
 
                 if (inTable(i + 1, j + 1, ROWS, COLS) == 1 && grille[i + 1][j + 1].bomb == BOMB) count++;
 
-                //affiche le nombre de bombe à proximité
+                //affiche le nombre de bombe Ã  proximitÃ©
                 if (count > 0) {
                     grille[i][j].proximity = count;
                 }
@@ -195,13 +194,13 @@ void reveal_case(tile grille[ROWS][COLS], int i, int j)
     if (grille[i][j].hidden == FALSE)
         return;
 
-    //révéler la case
+    //rÃ©vÃ©ler la case
     grille[i][j].hidden = FALSE;
 
     if (grille[i][j].proximity != 0)
         return;
 
-    //révéler les cases adjacentes
+    //rÃ©vÃ©ler les cases adjacentes
 
     reveal_case(grille, i - 1, j - 1);
     reveal_case(grille, i - 1, j);
@@ -224,9 +223,9 @@ void play(tile grille[ROWS][COLS])
 
     while (1){
                  
-        // Récupère la ligne
+        // RÃ©cupÃ¨re la ligne
         row = GetInputNumber("Entrer le numero de la ligne", 1, ROWS) - 1;
-        // Récupère la colonne
+        // RÃ©cupÃ¨re la colonne
         col = GetInputNumber("Entrer le numero de la colonne", 1, COLS) - 1;
 
         if (grille[row][col].hidden != TRUE) {
