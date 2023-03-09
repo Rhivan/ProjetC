@@ -1,19 +1,16 @@
 #include <stdio.h>
 #include <time.h>
+#include <stdbool.h>
 
 #define ROWS 10 // nombre de lignes
 #define COLS 10 // nombre de colonnes
 #define BOMB '*' 
 #define CACHE '+'
-
-
-#define TRUE 1
-#define FALSE 0
-typedef short BOOL;
+#define FLAG 'P'
 
 typedef struct tile {
     char bomb;
-    BOOL hidden;
+    bool hidden;
     int proximity;
     int flag;
 }tile;
@@ -27,6 +24,7 @@ void proximity(tile grille[ROWS][COLS]);
 void reveal_case(tile grille[ROWS][COLS], int i, int j);
 void play(tile grille[ROWS][COLS]);
 void affiche_win(tile grille[ROWS][COLS]);
+void affiche_lose(tile grille[ROWS][COLS]);
 
 int main()
 {
@@ -62,13 +60,13 @@ void afficher_grille(tile grille[ROWS][COLS])
     for (int i = 0; i < ROWS; i++) {
         printf("%2d |", i + 1);
         for (int j = 0; j < COLS; j++) {
-            if (grille[i][j].hidden == TRUE && grille[i][j].flag == TRUE)
+            if (grille[i][j].hidden == true && grille[i][j].flag == true)
                 printf(" P |");
-            else if (grille[i][j].hidden == FALSE && grille[i][j].bomb == BOMB)
+            else if (grille[i][j].hidden == false && grille[i][j].bomb == BOMB)
                 printf(" %c |", BOMB);
-            else if (grille[i][j].hidden == FALSE && grille[i][j].proximity == 0)
+            else if (grille[i][j].hidden == false && grille[i][j].proximity == 0)
                 printf("   |");
-            else if (grille[i][j].hidden == FALSE && grille[i][j].proximity > 0)
+            else if (grille[i][j].hidden == false && grille[i][j].proximity > 0)
                 printf(" %d |", grille[i][j].proximity);
             else {
                 printf(" %c |", CACHE);
@@ -101,9 +99,9 @@ void initialize_grille(tile grille[ROWS][COLS])
     int i, j;
     for (i = 0; i < ROWS; i++) {
         for (j = 0; j < COLS; j++) {
-            grille[i][j].hidden = TRUE;
-            grille[i][j].bomb = FALSE;
-            grille[i][j].flag = FALSE;
+            grille[i][j].hidden = true;
+            grille[i][j].bomb = false;
+            grille[i][j].flag = false;
             grille[i][j].proximity = 0;
         }
 
@@ -124,10 +122,10 @@ int GetInputNumber(const char* message, int min, int max)
             continue;
         }
         else
-        if (input < min || input > max) {
-            printf("Erreur: Entrer un nombre entre %d and %d.\n", min, max);
-            continue;
-        }
+            if (input < min || input > max) {
+                printf("Erreur: Entrer un nombre entre %d and %d.\n", min, max);
+                continue;
+            }
 
         // la saisie est valide
         return input;
@@ -138,11 +136,11 @@ int inTable(int i, int  j)
 {
     if (i >= 0 && i < ROWS && j >= 0 && j < COLS)
     {
-        return TRUE;
+        return true;
     }
     else
     {
-        return FALSE;
+        return false;
     }
 
 }
@@ -154,7 +152,7 @@ void proximity(tile grille[ROWS][COLS]) {
             if (grille[i][j].bomb != BOMB) {
                 int count = 0;
                 // trouve les bombes
-                if (inTable(i - 1,j - 1,ROWS,COLS)==1 && grille[i - 1][j - 1].bomb == BOMB) count++;
+                if (inTable(i - 1, j - 1, ROWS, COLS) == 1 && grille[i - 1][j - 1].bomb == BOMB) count++;
 
                 if (inTable(i - 1, j, ROWS, COLS) == 1 && grille[i - 1][j].bomb == BOMB) count++;
 
@@ -162,7 +160,7 @@ void proximity(tile grille[ROWS][COLS]) {
 
                 if (inTable(i, j - 1, ROWS, COLS) == 1 && grille[i][j - 1].bomb == BOMB) count++;
 
-                if (inTable(i, j +1, ROWS, COLS) == 1 && grille[i][j + 1].bomb == BOMB) count++;
+                if (inTable(i, j + 1, ROWS, COLS) == 1 && grille[i][j + 1].bomb == BOMB) count++;
 
                 if (inTable(i + 1, j - 1, ROWS, COLS) == 1 && grille[i + 1][j - 1].bomb == BOMB) count++;
 
@@ -177,7 +175,7 @@ void proximity(tile grille[ROWS][COLS]) {
                 else {
                     grille[i][j].proximity = 0;
                 }
-                
+
             }
         }
     }
@@ -187,15 +185,15 @@ void reveal_case(tile grille[ROWS][COLS], int i, int j)
 {
     // verifier que c'est dans le tableau
 
-    if (inTable(i ,j ,ROWS ,COLS) == 0)
+    if (inTable(i, j, ROWS, COLS) == 0)
         return;
 
     //verifier si c'est deja reveal
-    if (grille[i][j].hidden == FALSE)
+    if (grille[i][j].hidden == false)
         return;
 
     //révéler la case
-    grille[i][j].hidden = FALSE;
+    grille[i][j].hidden = false;
 
     if (grille[i][j].proximity != 0)
         return;
@@ -210,48 +208,76 @@ void reveal_case(tile grille[ROWS][COLS], int i, int j)
     reveal_case(grille, i + 1, j - 1);
     reveal_case(grille, i + 1, j);
     reveal_case(grille, i + 1, j + 1);
-    
-}
-
-void choix(tile grille[ROWS][COLS]) {
 
 }
 
 void play(tile grille[ROWS][COLS])
 {
-    int row, col;
+    int row, col, choice;
+    while (1) {
+        choice = GetInputNumber("Choisir une action : 1 jouer 2 drapeau", 1, 2);
+        if (choice == 1) {
+            while (1) {
 
-    while (1){
-                 
-        // Récupère la ligne
-        row = GetInputNumber("Entrer le numero de la ligne", 1, ROWS) - 1;
-        // Récupère la colonne
-        col = GetInputNumber("Entrer le numero de la colonne", 1, COLS) - 1;
+                // Récupère la ligne
+                row = GetInputNumber("Entrer le numero de la ligne", 1, ROWS) - 1;
+                // Récupère la colonne
+                col = GetInputNumber("Entrer le numero de la colonne", 1, COLS) - 1;
 
-        if (grille[row][col].hidden != TRUE) {
-            printf("Case deja choisie.\n");
-            continue;
-        }
+                if (grille[row][col].hidden != true) {
+                    printf("Case deja choisie.\n");
+                    continue;
+                }
 
-        if (grille[row][col].bomb == BOMB) {
-            printf("BOOM! Vous avez perdu.\n");
-            afficher_grille(grille);
-            return;
-        }
-        else {
-            reveal_case(grille,  row, col);
-            if (win(grille) == TRUE)
-            {
-                printf("BRAVO! Vous avez gagne");
-                affiche_win(grille);
-                return;
+                if (grille[row][col].bomb == BOMB) {
+                    affiche_lose(grille);
+                    printf("BOOM! Vous avez perdu.\n");
+                    return;
+                }
+                else {
+                    reveal_case(grille, row, col);
+                    if (win(grille) == true)
+                    {   
+                        affiche_win(grille);
+                        printf("BRAVO! Vous avez gagne");
+                        return;
+                    }
+                    afficher_grille(grille);
+                }
+                break;
+
             }
-            afficher_grille(grille);
         }
 
+        if (choice == 2) {
+            while (1) {
+                // Récupère la ligne
+                row = GetInputNumber("Entrer le numero de la ligne", 1, ROWS) - 1;
+                // Récupère la colonne
+                col = GetInputNumber("Entrer le numero de la colonne", 1, COLS) - 1;
+
+                if (grille[row][col].hidden != true) {
+                    printf("Case deja choisie.\n");
+                    continue;
+                }
+
+                if (grille[row][col].flag != false) {
+                    printf("Drapeau deja choisie.\n");
+                    continue;
+                }
+                if (grille[row][col].hidden == true) {
+                    grille[row][col].flag = true;
+                    afficher_grille(grille);
+                 
+                }
+                break;
+            }
+
+
+        }
+     
     }
 }
-
 
 int win(tile grille[ROWS][COLS])
 {
@@ -260,7 +286,7 @@ int win(tile grille[ROWS][COLS])
     {
         for (int j = 0; j < 10; j++)
         {
-            if (grille[i][j].hidden == FALSE && grille[i][j].bomb == FALSE)
+            if (grille[i][j].hidden == false && grille[i][j].bomb == false)
             {
                 count++;
             }
@@ -268,11 +294,11 @@ int win(tile grille[ROWS][COLS])
     }
     if (count == 90)
     {
-        return TRUE;
+        return true;
     }
     else
     {
-        return FALSE;
+        return false;
     }
 }
 
@@ -293,18 +319,18 @@ void affiche_win(tile grille[ROWS][COLS])
     for (int i = 0; i < ROWS; i++) {
         printf("%2d |", i + 1);
         for (int j = 0; j < COLS; j++) {
-            if (grille[i][j].proximity == FALSE && grille[i][j].flag == TRUE)
+            if (grille[i][j].proximity == 0 && grille[i][j].flag == true)
                 printf(" X |");
             else
-            if (grille[i][j].proximity == TRUE && grille[i][j].flag == TRUE)
-                printf(" P |");
-            else
-            if (grille[i][j].proximity == TRUE)
-                printf(" * |");
-            else 
-            {
-                printf("   |");
-            }
+                if (grille[i][j].proximity > 0 && grille[i][j].flag == true)
+                    printf(" P |");
+                else
+                    if (grille[i][j].proximity == true)
+                        printf(" * |");
+                    else
+                    {
+                        printf("   |");
+                    }
         }
         printf("\n");
         printf("   ");
@@ -314,3 +340,46 @@ void affiche_win(tile grille[ROWS][COLS])
         printf("-\n");
     }
 }
+
+void affiche_lose(tile grille[ROWS][COLS])
+{
+
+    printf("   ");
+    for (int i = 0; i < COLS; i++) {
+        printf(" %2d ", i + 1);
+    }
+    printf("\n");
+    printf("   ");
+    for (int i = 0; i < COLS; i++) {
+        printf("----");
+    }
+    printf("-\n");
+
+    for (int i = 0; i < ROWS; i++) {
+        printf("%2d |", i + 1);
+        for (int j = 0; j < COLS; j++) {
+            if (grille[i][j].hidden == true && grille[i][j].flag == true)
+                printf(" P |");
+            else
+                if (grille[i][j].bomb == true)
+                    printf(" %c |", BOMB);
+                else
+                    if (grille[i][j].hidden == true)
+                        printf(" %c |", CACHE);
+                    else
+                        if (grille[i][j].hidden == false && grille[i][j].proximity == 0)
+                            printf("   |");
+                        else
+                            if (grille[i][j].hidden == false && grille[i][j].proximity > 0)
+                                printf(" %d |", grille[i][j].proximity);
+            
+        }
+        printf("\n");
+        printf("   ");
+        for (int j = 0; j < COLS; j++) {
+            printf("----");
+        }
+        printf("-\n");
+    }
+}
+
