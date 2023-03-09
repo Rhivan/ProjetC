@@ -8,11 +8,13 @@
 #define CACHE '+'
 #define FLAG 'P'
 
+
+// La structure de données pour représenter une case de la grille
 typedef struct tile {
-    char bomb;
-    bool hidden;
-    int proximity;
-    int flag;
+    char bomb; // true si la case est une bombe
+    bool hidden; // true si la case est cachée
+    int proximity; // nombre de bombes adjacentes à cette case
+    bool flag; // true si la case a un drapeau
 }tile;
 
 void afficher_grille(tile grille[ROWS][COLS]);
@@ -21,18 +23,18 @@ void initialize_grille(tile grille[ROWS][COLS]);
 int GetInputNumber(const char* message, int min, int max);
 int inTable(int i, int  j);
 void proximity(tile grille[ROWS][COLS]);
-void reveal_case(tile grille[ROWS][COLS], int i, int j);
+void revelio(tile grille[ROWS][COLS], int i, int j);
 void play(tile grille[ROWS][COLS]);
 void affiche_win(tile grille[ROWS][COLS]);
 void affiche_lose(tile grille[ROWS][COLS]);
 
 int main()
 {
-    srand(time(NULL));
+    srand(time(NULL));// initialiser le générateur de nombres aléatoires
     tile grille[ROWS][COLS];
     int num_mines = 10;
 
-    // affiche la grille
+    // afficher la grille
 
     initialize_grille(grille);
     plant_bomb(grille, num_mines);
@@ -43,20 +45,23 @@ int main()
     return 0;
 }
 
+// Affiche la grille actuelle
 void afficher_grille(tile grille[ROWS][COLS])
 {
-
+    // Affiche le numéro de chaque colonne
     printf("   ");
     for (int i = 0; i < COLS; i++) {
         printf(" %2d ", i + 1);
     }
     printf("\n");
+    // Affiche une ligne horizontale
     printf("   ");
     for (int i = 0; i < COLS; i++) {
         printf("----");
     }
     printf("-\n");
 
+    // Affiche chaque ligne de la grille
     for (int i = 0; i < ROWS; i++) {
         printf("%2d |", i + 1);
         for (int j = 0; j < COLS; j++) {
@@ -81,10 +86,13 @@ void afficher_grille(tile grille[ROWS][COLS])
     }
 }
 
+//place aléatoirement des bombes dans la grille
 void plant_bomb(tile grille[ROWS][COLS], int num_mines)
 {
     int i, j, count = 0;
+    // Boucle jusqu'à ce que le nombre de bombes soit atteint
     while (count < num_mines) {
+        // Génère des coordonnées aléatoires pour la position de la bombe
         i = rand() % ROWS;
         j = rand() % COLS;
         if (grille[i][j].bomb != BOMB) {
@@ -94,11 +102,14 @@ void plant_bomb(tile grille[ROWS][COLS], int num_mines)
     }
 }
 
+//Initialise la grille
 void initialize_grille(tile grille[ROWS][COLS])
 {
     int i, j;
+    // On parcourt toutes les cases de la grille
     for (i = 0; i < ROWS; i++) {
         for (j = 0; j < COLS; j++) {
+            // On initialise chaque case à sa valeur par défaut
             grille[i][j].hidden = true;
             grille[i][j].bomb = false;
             grille[i][j].flag = false;
@@ -108,6 +119,7 @@ void initialize_grille(tile grille[ROWS][COLS])
     }
 }
 
+//Vérifie si la saisie est valide
 int GetInputNumber(const char* message, int min, int max)
 {
     int input;
@@ -132,6 +144,7 @@ int GetInputNumber(const char* message, int min, int max)
     }
 }
 
+//Vérifie les coordonnées
 int inTable(int i, int  j)
 {
     if (i >= 0 && i < ROWS && j >= 0 && j < COLS)
@@ -181,7 +194,7 @@ void proximity(tile grille[ROWS][COLS]) {
     }
 }
 
-void reveal_case(tile grille[ROWS][COLS], int i, int j)
+void revelio(tile grille[ROWS][COLS], int i, int j)
 {
     // verifier que c'est dans le tableau
 
@@ -200,14 +213,14 @@ void reveal_case(tile grille[ROWS][COLS], int i, int j)
 
     //révéler les cases adjacentes
 
-    reveal_case(grille, i - 1, j - 1);
-    reveal_case(grille, i - 1, j);
-    reveal_case(grille, i - 1, j + 1);
-    reveal_case(grille, i, j - 1);
-    reveal_case(grille, i, j + 1);
-    reveal_case(grille, i + 1, j - 1);
-    reveal_case(grille, i + 1, j);
-    reveal_case(grille, i + 1, j + 1);
+    revelio(grille, i - 1, j - 1);
+    revelio(grille, i - 1, j);
+    revelio(grille, i - 1, j + 1);
+    revelio(grille, i, j - 1);
+    revelio(grille, i, j + 1);
+    revelio(grille, i + 1, j - 1);
+    revelio(grille, i + 1, j);
+    revelio(grille, i + 1, j + 1);
 
 }
 
@@ -224,18 +237,21 @@ void play(tile grille[ROWS][COLS])
                 // Récupère la colonne
                 col = GetInputNumber("Entrer le numero de la colonne", 1, COLS) - 1;
 
+                // Vérifie si la case a déjà été jouée
                 if (grille[row][col].hidden != true) {
                     printf("Case deja choisie.\n");
                     continue;
                 }
 
+                // Vérifie si la case contient une bombe
                 if (grille[row][col].bomb == BOMB) {
                     affiche_lose(grille);
                     printf("BOOM! Vous avez perdu.\n");
                     return;
                 }
                 else {
-                    reveal_case(grille, row, col);
+                    // Vérifie si le joueur a gagné
+                    revelio(grille, row, col);
                     if (win(grille) == true)
                     {   
                         affiche_win(grille);
@@ -261,11 +277,13 @@ void play(tile grille[ROWS][COLS])
                     continue;
                 }
 
+                // Vérifie si la case contient un drapeau
                 if (grille[row][col].flag != false) {
                     printf("Drapeau deja choisie.\n");
                     continue;
                 }
                 if (grille[row][col].hidden == true) {
+                    //plante le drapeau
                     grille[row][col].flag = true;
                     afficher_grille(grille);
                  
@@ -279,22 +297,23 @@ void play(tile grille[ROWS][COLS])
     }
 }
 
+//Vérifie si toutes les cases non minées ont été révélées
 int win(tile grille[ROWS][COLS])
 {
-    int count = 0;
+    int count = 0;//compte le nombre de cases révélées
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
         {
             if (grille[i][j].hidden == false && grille[i][j].bomb == false)
             {
-                count++;
+                count++;// on incrémente le compteur
             }
         }
     }
     if (count == 90)
     {
-        return true;
+        return true;//le joueur a gagné
     }
     else
     {
